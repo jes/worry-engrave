@@ -1,0 +1,118 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use FindBin;
+use lib "$FindBin::Bin/lib";
+
+use WorryEngrave::CNC;
+use WorryEngrave::Text;
+
+use Term::Screen;
+
+my $scr = Term::Screen->new or die "can't get Term::Screen\n";
+
+my ($curx,$cury,$curz) = (0,0,0);
+my $step = 10;
+my $lastch = 0;
+my $text = 'HOPE';
+
+while (1) {
+    draw();
+    my $ch = $scr->getch;
+    $lastch = $ch;
+    if ($ch eq '0') {
+        draw();
+        $ch = $scr->getch;
+        $curx = 0 if $ch eq 'x';
+        $cury = 0 if $ch eq 'y';
+        $curz = 0 if $ch eq 'z';
+        # TODO: set current coordinates on cnc machine
+    }
+    if ($ch eq 'q') {
+        $scr->clrscr;
+        exit(0);
+    }
+    if ($ch eq '+') {
+        $step = $step*10;
+    }
+    if ($ch eq '-') {
+        $step = $step/10;
+    }
+    if ($ch =~ /^k[lrud]$/) {
+        $curx -= $step if $ch =~ /l/;
+        $curx += $step if $ch =~ /r/;
+        $cury -= $step if $ch =~ /d/;
+        $cury += $step if $ch =~ /u/;
+        # TODO: move coordinates on cnc machine
+    }
+    if ($ch =~ /^pg(up|dn)$/) {
+        $curz -= $step if $ch =~ /dn/;
+        $curz += $step if $ch =~ /up/;
+        # TODO: move coordinates on cnc machine
+    }
+    if ($ch eq 'e') {
+        # TODO: engrave
+    }
+    if ($ch eq 'c') {
+        $text = input(8, $text, "New text");
+    }
+}
+
+sub input {
+    my ($line, $cur, $prompt) = @_;
+
+    $scr->at($line, 0);
+    $scr->clreol;
+    $scr->at($line, 2);
+    $scr->puts("$prompt: ");
+
+    my $new = '';
+
+    while (1) {
+        my $ch = $scr->getch;
+        last if $ch eq "\r"; # enter
+        return $cur if ord($ch) == 7; # escape
+        $new .= $ch;
+    }
+
+    return $new;
+}
+
+sub draw {
+    $scr->clrscr;
+    $scr->at(0, 2);
+    $scr->puts("--- WORRY ENGRAVE by jes ---");
+
+    $scr->at(2, 2);
+    $scr->puts("X:");
+    $scr->bold->puts(sprintf("%7.2f",$curx))->normal;
+    $scr->puts(" [0 X] [left] [right]");
+
+    $scr->at(3, 2);
+    $scr->puts("Y:");
+    $scr->bold->puts(sprintf("%7.2f",$cury))->normal;
+    $scr->puts(" [0 Y] [up] [down]");
+
+    $scr->at(4, 2);
+    $scr->puts("Z:");
+    $scr->bold->puts(sprintf("%7.2f",$curz))->normal;
+    $scr->puts(" [0 Z] [PgUp] [PgDn]");
+
+    $scr->at(6, 2);
+    $scr->puts("Step: ");
+    $scr->bold->puts(sprintf("%g",$step))->normal;
+    $scr->puts(" [+] [-]");
+
+    $scr->at(8, 2);
+    $scr->puts("Text: ");
+    $scr->bold->puts($text)->normal;
+    $scr->puts(" [E]ngrave [C]hange");
+
+    $scr->at(10, 2);
+    $scr->puts("[Q]uit");
+
+    $scr->at(12,2);
+    $scr->puts(sprintf("DEBUG KEY: '%s' %d", $lastch, ord($lastch)));
+}
