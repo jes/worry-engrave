@@ -13,7 +13,7 @@ sub char {
     my $vspeed = $opts{vspeed} // 40;
     my $rapidspeed = $opts{rapidspeed} // 1000;
     my $cutheight = $opts{cutheight} // -0.2;
-    my $rapidheight = $opts{rapidheight} // 2;
+    my $rapidheight = $opts{rapidheight} // 1;
 
     my $f = $pkg->fontdata();
     my $pathstring = $f->[$charint];
