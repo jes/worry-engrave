@@ -11,6 +11,8 @@ use WorryEngrave::Text;
 
 use Term::Screen;
 
+connect_to_router();
+
 my $scr = Term::Screen->new or die "can't get Term::Screen\n";
 
 my ($curx,$cury,$curz) = (0,0,0);
@@ -18,44 +20,50 @@ my $step = 10;
 my $lastch = 0;
 my $text = 'HOPE';
 
+my $safez = 50;
+my $safex = 0;
+my $safey = 200;
+
 while (1) {
     draw();
     my $ch = $scr->getch;
     $lastch = $ch;
-    if ($ch eq '0') {
+    if ($ch eq '0') { # zero one of the axes
         draw();
         $ch = $scr->getch;
         $curx = 0 if $ch eq 'x';
         $cury = 0 if $ch eq 'y';
         $curz = 0 if $ch eq 'z';
-        # TODO: set current coordinates on cnc machine
+        WorryEngrave::CNC->send("G92 X$curx Y$cury Z$curz");
     }
-    if ($ch eq 'q') {
+    if ($ch eq 'q') { # quit
         $scr->clrscr;
         exit(0);
     }
-    if ($ch eq '+') {
+    if ($ch eq '+') { # increase step size
         $step = $step*10;
     }
-    if ($ch eq '-') {
+    if ($ch eq '-') { # decrease step size
         $step = $step/10;
     }
-    if ($ch =~ /^k[lrud]$/) {
+    if ($ch =~ /^k[lrud]$/) { # arrow key: move x or y
         $curx -= $step if $ch =~ /l/;
         $curx += $step if $ch =~ /r/;
         $cury -= $step if $ch =~ /d/;
         $cury += $step if $ch =~ /u/;
-        # TODO: move coordinates on cnc machine
+        WorryEngrave::CNC->send("G0 X$curx Y$cury Z$curz");
     }
-    if ($ch =~ /^pg(up|dn)$/) {
+    if ($ch =~ /^pg(up|dn)$/) { # move z
         $curz -= $step if $ch =~ /dn/;
         $curz += $step if $ch =~ /up/;
-        # TODO: move coordinates on cnc machine
+        WorryEngrave::CNC->send("G0 X$curx Y$cury Z$curz");
     }
-    if ($ch eq 'e') {
-        # TODO: engrave
+    if ($ch eq 'e') { # engrave text
+        ready();
+        engrave($text);
+        unready();
     }
-    if ($ch eq 'c') {
+    if ($ch eq 'c') { # change text
         $text = input(8, $text, "New text");
     }
 }
@@ -115,4 +123,62 @@ sub draw {
 
     $scr->at(12,2);
     $scr->puts(sprintf("DEBUG KEY: '%s' %d", $lastch, ord($lastch)));
+}
+
+sub ready {
+    WorryEngrave::CNC->send("M3 S24000");
+    WorryEngrave::CNC->send("G1 Z$safez");
+    WorryEngrave::CNC->send("G0 X0 Y0");
+}
+
+sub engrave {
+    my ($text) = @_;
+
+    my $gcode = WorryEngrave::Text->mkgcode($text,
+        centrex => 0,
+        centrey => 0,
+        diameter => 18,
+    );
+
+    my @lines = split /\n/, $gcode;
+    my $n = 0;
+
+    # wait for spindle to spin up
+    for (1..11) {
+        $scr->at(8, 2);
+        $scr->clreol;
+        $scr->puts("Engraving $text: 0.0% [hit any key to abort]");
+        return if $scr->key_pressed; # abort on any keypress
+        sleep(1);
+    };
+
+    for my $i (0 .. $#lines) {
+        my $l = $lines[$i];
+        my $pct = sprintf("%.1f", 100 * $i / @lines);
+
+        $scr->at(8, 2);
+        $scr->clreol;
+        $scr->puts("Engraving $text: $pct% [hit any key to abort]");
+
+        return if $scr->key_pressed; # abort on any keypress
+
+        WorryEngrave::CNC->send($l);
+    }
+}
+
+sub unready {
+    WorryEngrave::CNC->send("M5");
+    WorryEngrave::CNC->send("G1 Z$safez");
+    WorryEngrave::CNC->send("G0 X$safex Y$safey");
+}
+
+# this runs before Term::Screen is set up
+sub connect_to_router {
+    print "Connecting...\n";
+
+    WorryEngrave::CNC->connect("/dev/ttyACM0")
+        or WorryEngrave::CNC->connect("/dev/ttyACM1")
+            or die "can't connect";
+
+    print "OK\n";
 }
