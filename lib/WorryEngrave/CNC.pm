@@ -16,6 +16,14 @@ sub send {
     my ($pkg, $gcode) = @_;
 
     print $CNC_FH "$gcode\n";
+    print STDERR "> $gcode\n";
+    my $gotline = 0;
+    while (!$gotline) {
+        while (<$CNC_FH>) {
+            print STDERR "< $_\n";
+            $gotline = 1;
+       }
+   }
 }
 
 1;

@@ -20,9 +20,10 @@ my $step = 10;
 my $lastch = 0;
 my $text = 'HOPE';
 
-my $safez = 50;
+my $safez = 20;
 my $safex = 0;
 my $safey = 200;
+my $fastfeed = 1000;
 
 while (1) {
     draw();
@@ -127,8 +128,8 @@ sub draw {
 
 sub ready {
     WorryEngrave::CNC->send("M3 S24000");
-    WorryEngrave::CNC->send("G1 Z$safez");
-    WorryEngrave::CNC->send("G0 X0 Y0");
+    WorryEngrave::CNC->send("G1 Z$safez F$fastfeed");
+    WorryEngrave::CNC->send("G0 X0 Y0 F$fastfeed");
 }
 
 sub engrave {
@@ -167,9 +168,9 @@ sub engrave {
 }
 
 sub unready {
-    WorryEngrave::CNC->send("M5");
-    WorryEngrave::CNC->send("G1 Z$safez");
-    WorryEngrave::CNC->send("G0 X$safex Y$safey");
+    WorryEngrave::CNC->send("M5 S0");
+    WorryEngrave::CNC->send("G1 Z$safez F$fastfeed");
+    WorryEngrave::CNC->send("G0 X$safex Y$safey F$fastfeed");
 }
 
 # this runs before Term::Screen is set up
