@@ -1,0 +1,102 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use FindBin;
+use lib "$FindBin::Bin/lib";
+
+use WorryEngrave::Text;
+
+use Getopt::Long;
+
+my $centrex;
+my $centrey;
+my $hspeed;
+my $vspeed;
+my $rapidspeed;
+my $cutheight;
+my $rapidheight;
+my $rpm;
+my $diameter;
+my $width;
+my $height;
+
+GetOptions(
+    'centre-x=f' => \$centrex,
+    'centre-y=f' => \$centrey,
+    'hspeed=f' => \$hspeed,
+    'vspeed=f' => \$vspeed,
+    'rapid-speed=f' => \$rapidspeed,
+    'cut-height=f' => \$cutheight,
+    'rapid-height=f' => \$rapidheight,
+    'rpm=f' => \$rpm,
+    'diameter=f' => \$diameter,
+    'width=f' => \$width,
+    'height=f' => \$height,
+    'help' => sub { usage(0) },
+) or usage(1);
+
+my $str = join(' ', @ARGV);
+
+print WorryEngrave::Text->mkgcode($str,
+    centrex => $centrex,
+    centrey => $centrey,
+    hspeed => $hspeed,
+    vspeed => $vspeed,
+    rapidspeed => $rapidspeed,
+    cutheight => $cutheight,
+    rapidheight => $rapidheight,
+    rpm => $rpm,
+    diameter => $diameter,
+    width => $width,
+    height => $height,
+);
+
+sub usage {
+    my ($rc) = @_;
+
+    print qq{usage: mk-gcode [options] > GCODEFILE
+
+options:
+    --centre-x X
+        Centre the generated G-Code on the given X coordinate.
+
+    --centre-y Y
+        Centre the generated G-Code on the given Y coordinate.
+
+    --h-speed SPEED
+        Cut at the given SPEED in the horizontal plane.
+
+    --v-speed SPEED
+        Cut at the given SPEED in the vertical axis.
+
+    --rapid-speed SPEED
+        Travel between cuts at the given SPEED.
+
+    --cut-height Z
+        Move to the given Z coordinate for cutting (probably negative).
+
+    --rapid-height Z
+        Move to the given Z coordinate for travel moves.
+
+    --rpm RPM
+        Run the spindle at the given RPM.
+
+    --diameter DIAMETER
+        Make the text fit exactly in a circle of the given DIAMETER.
+
+    --width WIDTH
+        Make the text fit exactly in a rectangle of the given WIDTH.
+
+    --height HEIGHT
+        Make the text fit exactly in a rectangle of the given HEIGHT.
+
+    --help
+        Show this help
+
+By James Stanley <james\@incoherency.co.uk>
+};
+
+    exit($rc);
+}
