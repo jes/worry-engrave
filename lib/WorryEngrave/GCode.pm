@@ -73,8 +73,8 @@ sub scale {
         while ($l =~ /([XY])\s*([-.0-9]+)/g) {
             my ($letter, $value) = ($1, $2);
             my $newvalue = $value;
-            $newvalue = $px + ($newvalue - $px) * $scale if $letter eq 'X';
-            $newvalue = $py + ($newvalue - $py) * $scale if $letter eq 'Y';
+            $newvalue = sprintf("%.3f", $px + ($newvalue - $px) * $scale) if $letter eq 'X';
+            $newvalue = sprintf("%.3f", $py + ($newvalue - $py) * $scale) if $letter eq 'Y';
             $newl =~ s/$letter\s*$value/$letter$newvalue/;
         };
 
