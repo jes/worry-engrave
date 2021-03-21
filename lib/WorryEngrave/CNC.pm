@@ -42,23 +42,27 @@ sub read_line {
     return undef;
 }
 
-# return current work coordinates
+# wait for machine to become idle, then return current work coordinates
 sub get_coords {
     my ($pkg) = @_;
 
     return (undef,undef,undef) if $dryrun;
 
-    print $CNC_FH "?\n";
-
     while (1) {
-        while ($_ = $pkg->read_line) {
-            if (/WCO:\s*([-.0-9]+),([-.0-9]+),([-.0-9]+)/) {
-                @wco = ($1,$2,$3);
-            }
-            if (/MPos:\s*([-.0-9]+),([-.0-9]+),([-.0-9]+)/) {
-                return ($1-$wco[0],$2-$wco[1],$3-$wco[2]);
-            }
-       }
+        print $CNC_FH "?\n";
+
+        my $ask_again = 0;
+        while (!$ask_again) {
+            while ($_ = $pkg->read_line) {
+                if (/WCO:\s*([-.0-9]+),([-.0-9]+),([-.0-9]+)/) {
+                    @wco = ($1,$2,$3);
+                }
+                if (/MPos:\s*([-.0-9]+),([-.0-9]+),([-.0-9]+)/) {
+                    return ($1-$wco[0],$2-$wco[1],$3-$wco[2]) if /Idle/;
+                    $ask_again = 1;
+                }
+           }
+        }
     }
 }
 

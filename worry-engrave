@@ -37,8 +37,9 @@ my $fastprobe = 200; # mm/min
 my $slowprobe = 50; # mm/min
 my $probeheight = 24.83 - 11.8; # mm # probe is 24.83mm tall, jig platform is 11.8mm above table
 
+($curx,$cury,$curz) = WorryEngrave::CNC->get_coords() unless $dryrun;
+
 while (1) {
-    ($curx,$cury,$curz) = WorryEngrave::CNC->get_coords() unless $dryrun;
     draw();
     my $ch = $scr->getch;
     $lastch = $ch;
@@ -216,6 +217,8 @@ sub unready {
     WorryEngrave::CNC->send("M5 S0");
     WorryEngrave::CNC->send("G1 Z$safez F$fastfeed");
     WorryEngrave::CNC->send("G0 X$safex Y$safey F$fastfeed");
+
+    ($curx,$cury,$curz) = WorryEngrave::CNC->get_coords() unless $dryrun;
 }
 
 sub help {
