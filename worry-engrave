@@ -9,7 +9,16 @@ use lib "$FindBin::Bin/lib";
 use WorryEngrave::CNC;
 use WorryEngrave::Text;
 
+use Getopt::Long;
 use Term::Screen;
+
+my $dryrun;
+
+GetOptions(
+    'dry-run' => \$dryrun,
+    'help' => sub { help(0) },
+    'usage' => sub { help(0) },
+) or help(1);
 
 connect_to_router();
 
@@ -61,6 +70,7 @@ while (1) {
     }
     if ($ch eq 'e') { # engrave text
         ready();
+        check_spindle();
         engrave($text);
         unready();
     }
@@ -132,6 +142,22 @@ sub ready {
     WorryEngrave::CNC->send("G0 X0 Y0 F$fastfeed");
 }
 
+sub check_spindle {
+    $scr->at(8, 2);
+    $scr->clreol;
+    $scr->puts("Is the spindle spinning up? [Y]es [N]o");
+
+    while (1) {
+        my $ch = $scr->getch;
+        last if $ch eq 'y';
+        if ($ch eq 'n') {
+            $scr->at(8, 2);
+            $scr->clreol;
+            $scr->puts("Switch to PC mode and press green button. Is the spindle spinning up? [Y]es [N]o");
+        }
+    }
+}
+
 sub engrave {
     my ($text) = @_;
 
@@ -177,9 +203,21 @@ sub unready {
 sub connect_to_router {
     print "Connecting...\n";
 
-    WorryEngrave::CNC->connect("/dev/ttyACM0")
-        or WorryEngrave::CNC->connect("/dev/ttyACM1")
-            or die "can't connect";
+    if ($dryrun) {
+        WorryEngrave::CNC->dryrun;
+    } else {
+        WorryEngrave::CNC->connect("/dev/ttyACM0")
+            or WorryEngrave::CNC->connect("/dev/ttyACM1")
+                or die "can't connect";
+    }
 
     print "OK\n";
+}
+
+sub help {
+    my ($rc) = @_;
+
+    print "usage: worry-engrave [--dry-run]\n";
+
+    exit($rc);
 }

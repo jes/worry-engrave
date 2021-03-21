@@ -1,9 +1,16 @@
 package WorryEngrave::CNC;
 
 my $CNC_FH;
+my $dryrun;
+
+sub dryrun {
+    $dryrun = 1;
+}
 
 sub connect {
     my ($pkg, $dev) = @_;
+
+    return undef if $dryrun;
 
     # configure serial port
     # no idea what the hex numbers mean, I got them from "stty -g" after getting the port into a workable state using Arduino serial monitor
@@ -14,6 +21,8 @@ sub connect {
 
 sub send {
     my ($pkg, $gcode) = @_;
+
+    return if $dryrun;
 
     print $CNC_FH "$gcode\n";
     print STDERR "> $gcode\n";
