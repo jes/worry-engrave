@@ -207,8 +207,6 @@ sub engrave {
         $scr->clreol;
         $scr->puts("Engraving $text: $pct%");
 
-        return if $scr->key_pressed; # abort on any keypress
-
         WorryEngrave::CNC->send($l);
     }
 }
