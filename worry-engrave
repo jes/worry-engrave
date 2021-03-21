@@ -25,14 +25,17 @@ connect_to_router();
 my $scr = Term::Screen->new or die "can't get Term::Screen\n";
 
 my ($curx,$cury,$curz) = (0,0,0);
-my $step = 10;
+my $step = 10; # mm
 my $lastch = 0;
 my $text = 'HOPE';
 
-my $safez = 20;
-my $safex = 0;
-my $safey = 200;
-my $fastfeed = 1000;
+my $safez = 20; # mm
+my $safex = 0; # mm
+my $safey = 200; # mm
+my $fastfeed = 1000; # mm/min
+my $fastprobe = 100; # mm/min
+my $slowprobe = 10; # mm/min
+my $probeheight = 24.83 - 11.8; # mm # probe is 24.83mm tall, jig platform is 11.8mm above table
 
 while (1) {
     draw();
@@ -70,7 +73,6 @@ while (1) {
     }
     if ($ch eq 'e') { # engrave text
         ready();
-        check_spindle();
         engrave($text);
         unready();
     }
@@ -137,9 +139,6 @@ sub draw {
 
     $scr->at(10, 2);
     $scr->puts("[Q]uit [H]elp");
-
-    $scr->at(12,2);
-    $scr->puts(sprintf("DEBUG KEY: '%s' %d", $lastch, ord($lastch)));
 }
 
 sub ready {
@@ -148,24 +147,37 @@ sub ready {
     WorryEngrave::CNC->send("G0 X0 Y0 F$fastfeed");
 }
 
-sub check_spindle {
+sub check {
+    my ($question, $instruction) = @_;
+
     $scr->at(8, 2);
     $scr->clreol;
-    $scr->puts("Is the spindle spinning up? [Y]es [N]o");
+    $scr->puts("$question [Y]es [N]o");
+
+    my $gotn = 0;
 
     while (1) {
         my $ch = $scr->getch;
         last if $ch eq 'y';
         if ($ch eq 'n') {
-            $scr->at(8, 2);
-            $scr->clreol;
-            $scr->puts("Switch to PC mode and press green button. Is the spindle spinning up? [Y]es [N]o");
+            if ($gotn || !$instruction) {
+                return 0;
+            } else {
+                $gotn = 1;
+                $scr->at(8, 2);
+                $scr->clreol;
+                $scr->puts("$instruction $question [Y]es [N]o");
+            }
         }
     }
+
+    return 1;
 }
 
 sub engrave {
     my ($text) = @_;
+
+    return if !check("Is the spindle spinning up?", "Switch to PC mode and press green button.");
 
     my $gcode = WorryEngrave::Text->mkgcode($text,
         centrex => 0,
@@ -177,7 +189,7 @@ sub engrave {
     my $n = 0;
 
     # wait for spindle to spin up
-    for (1..11) {
+    for (1..10) {
         $scr->at(8, 2);
         $scr->clreol;
         $scr->puts("Engraving $text: 0.0% [hit any key to abort]");
@@ -217,10 +229,10 @@ sub help {
         "3. Use arrow keys to jog tool to platform.",
         "4. Use [+]/[-] to adjust step size and jog tool to exact centre using arrow keys.",
         "5. Use [0 X] and [0 Y] to zero the X and Y coordinates.",
-        "6. Place probe tool next to jig, plug it in, clip to tool.",
-        "7. Use arrow keys to jog tool to probe puck.",
+        "6. Place probe next to jig, plug it in, clip to tool.",
+        "7. Use arrow keys to jog tool to probe.",
         "8. Use [P] to probe Z height.",
-        "9. Remove the probe puck.",
+        "9. Remove the probe.",
         "",
         "  ENGRAVING",
         "1. Use [C] to set the text.",
@@ -244,9 +256,27 @@ sub help {
 }
 
 sub probez {
-    # probe Z, add 11.8 or whatever
-    # ask the user to remove the probe tool
-    # return to safex/safey/safez once they confirm
+    return if !check("Is the probe in place underneath the cutting tool?", "Put the probe in place.");
+
+    # probe downwards, fast
+    WorryEngrave::CNC->send("G38.2 Z-50 F$fastprobe");
+    # move up by 1mm
+    WorryEngrave::CNC->send("G91 G0 Z1 F$fastfeed");
+    WorryEngrave::CNC->send("G90");
+    # prove downwards, slowly
+    WorryEngrave::CNC->send("G38.2 Z-5 F$slowprobe");
+    # set Z coord
+    WorryEngrave::CNC->send("G92 Z$probeheight");
+
+    # don't move the tool unless they've already set X and Y
+    return if !check("Have you already zeroed X and Y?");
+
+    # don't move the tool until they remove the probe
+    return if !check("Have you removed the probe?", "Remove the probe.");
+
+    # return to safe point
+    WorryEngrave::CNC->send("G1 Z$safez F$fastfeed");
+    WorryEngrave::CNC->send("G0 X$safex Y$safey F$fastfeed");
 }
 
 # this runs before Term::Screen is set up
@@ -260,6 +290,8 @@ sub connect_to_router {
             or WorryEngrave::CNC->connect("/dev/ttyACM1")
                 or die "can't connect";
     }
+
+    WorryEngrave::CNC->send("G21 G90 G54 M5");
 
     print "OK\n";
 }
