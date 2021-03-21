@@ -38,6 +38,7 @@ my $slowprobe = 50; # mm/min
 my $probeheight = 24.83 - 11.8; # mm # probe is 24.83mm tall, jig platform is 11.8mm above table
 
 while (1) {
+    ($curx,$cury,$curz) = WorryEngrave::CNC->get_coords() unless $dryrun;
     draw();
     my $ch = $scr->getch;
     $lastch = $ch;

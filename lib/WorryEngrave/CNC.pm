@@ -19,20 +19,33 @@ sub connect {
     return open($CNC_FH, '+<', $dev)
 }
 
+sub get_coords {
+    return (undef,undef,undef) if $dryrun;
+
+    print $CNC_FH "?\n";
+
+    while (1) {
+        while (<$CNC_FH>) {
+            if (/WCO:\s*([-.0-9]+),([-.0-9]+),([-.0-9]+)/) {
+                return ($1,$2,$3);
+            }
+       }
+    }
+}
+
 sub send {
     my ($pkg, $gcode) = @_;
 
     return if $dryrun;
 
     print $CNC_FH "$gcode\n";
-    print STDERR "> $gcode\n";
+
     my $gotline = 0;
     while (!$gotline) {
         while (<$CNC_FH>) {
-            print STDERR "< $_\n";
             $gotline = 1;
        }
-   }
+    }
 }
 
 1;
