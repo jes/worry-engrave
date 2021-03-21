@@ -205,7 +205,7 @@ sub engrave {
 
         $scr->at(8, 2);
         $scr->clreol;
-        $scr->puts("Engraving $text: $pct% [hit any key to abort]");
+        $scr->puts("Engraving $text: $pct%");
 
         return if $scr->key_pressed; # abort on any keypress
 
