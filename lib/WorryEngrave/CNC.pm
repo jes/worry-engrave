@@ -36,7 +36,7 @@ sub read_line {
 
     while (<$CNC_FH>) {
         $buf .= $_;
-        return $1 if $buf =~ s/^.*\n//;
+        return $1 if $buf =~ s/^(.*)\n//;
     }
 
     return undef;
