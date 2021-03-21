@@ -267,6 +267,8 @@ sub probez {
     WorryEngrave::CNC->send("G38.2 Z-5 F$slowprobe");
     # set Z coord
     WorryEngrave::CNC->send("G92 Z$probeheight");
+    # pick tool up
+    WorryEngrave::CNC->send("G1 Z$safez F$fastfeed");
 
     # don't move the tool unless they've already set X and Y
     return if !check("Have you already zeroed X and Y?");
@@ -275,7 +277,6 @@ sub probez {
     return if !check("Have you removed the probe?", "Remove the probe.");
 
     # return to safe point
-    WorryEngrave::CNC->send("G1 Z$safez F$fastfeed");
     WorryEngrave::CNC->send("G0 X$safex Y$safey F$fastfeed");
 }
 
