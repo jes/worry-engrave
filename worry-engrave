@@ -16,9 +16,9 @@ my $dryrun;
 
 GetOptions(
     'dry-run' => \$dryrun,
-    'help' => sub { help(0) },
-    'usage' => sub { help(0) },
-) or help(1);
+    'help' => sub { usage(0) },
+    'usage' => sub { usage(0) },
+) or usage(1);
 
 connect_to_router();
 
@@ -77,6 +77,12 @@ while (1) {
     if ($ch eq 'c') { # change text
         $text = input(8, $text, "New text");
     }
+    if ($ch eq 'h') { # help
+        help();
+    }
+    if ($ch eq 'p') { # probe
+        probez();
+    }
 }
 
 sub input {
@@ -117,7 +123,7 @@ sub draw {
     $scr->at(4, 2);
     $scr->puts("Z:");
     $scr->bold->puts(sprintf("%7.2f",$curz))->normal;
-    $scr->puts(" [0 Z] [PgUp] [PgDn]");
+    $scr->puts(" [0 Z] [PgUp] [PgDn] [P]robe");
 
     $scr->at(6, 2);
     $scr->puts("Step: ");
@@ -130,7 +136,7 @@ sub draw {
     $scr->puts(" [E]ngrave [C]hange");
 
     $scr->at(10, 2);
-    $scr->puts("[Q]uit");
+    $scr->puts("[Q]uit [H]elp");
 
     $scr->at(12,2);
     $scr->puts(sprintf("DEBUG KEY: '%s' %d", $lastch, ord($lastch)));
@@ -199,6 +205,50 @@ sub unready {
     WorryEngrave::CNC->send("G0 X$safex Y$safey F$fastfeed");
 }
 
+sub help {
+    $scr->clrscr;
+    $scr->at(0, 2);
+    $scr->puts("--- WORRY ENGRAVE by jes ---");
+
+    my @help = (
+        "  SETUP",
+        "1. Turn the CNC machine on.",
+        "2. Use [PgUp]/[PgDn] to position tool above jig.",
+        "3. Use arrow keys to jog tool to platform.",
+        "4. Use [+]/[-] to adjust step size and jog tool to exact centre using arrow keys.",
+        "5. Use [0 X] and [0 Y] to zero the X and Y coordinates.",
+        "6. Place probe tool next to jig, plug it in, clip to tool.",
+        "7. Use arrow keys to jog tool to probe puck.",
+        "8. Use [P] to probe Z height.",
+        "9. Remove the probe puck.",
+        "",
+        "  ENGRAVING",
+        "1. Use [C] to set the text.",
+        "2. Place a blank pendant on the platform.",
+        "3. Making sure it is pushed home, tighten the clamp.",
+        "4. Use [E] to engrave the text on the first side.",
+        "5. Loosen the clamp, rotate the pendant around the Y axis, reclamp.",
+        "6. Use [E] to engrave the text on the second side.",
+        "7. Loosen the clamp and remove the pendant.",
+        "",
+        "[hit any key to go back]",
+    );
+
+    my $line = 2;
+    for my $l (@help) {
+        $scr->at($line++, 2);
+        $scr->puts($l);
+    }
+
+    $scr->getch;
+}
+
+sub probez {
+    # probe Z, add 11.8 or whatever
+    # ask the user to remove the probe tool
+    # return to safex/safey/safez once they confirm
+}
+
 # this runs before Term::Screen is set up
 sub connect_to_router {
     print "Connecting...\n";
@@ -214,7 +264,7 @@ sub connect_to_router {
     print "OK\n";
 }
 
-sub help {
+sub usage {
     my ($rc) = @_;
 
     print "usage: worry-engrave [--dry-run]\n";
