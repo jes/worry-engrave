@@ -90,7 +90,7 @@ sub mkgcode {
             # scale the text so that it fits in a rectangle that
             # touches a circle of the given diameter at all 4 corners
 
-            # start out by working what size circle it currently fits in
+            # start out by working out what size circle it currently fits in
             my $halfw = $width/2;
             my $halfh = $height/2;
             my $cur_diameter = 2*sqrt($halfw*$halfw + $halfh*$halfh);
