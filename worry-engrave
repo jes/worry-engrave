@@ -182,7 +182,7 @@ sub engrave {
     my $gcode = WorryEngrave::Text->mkgcode($text,
         centrex => 0,
         centrey => 0,
-        diameter => 18,
+        diameter => 17,
     );
 
     my @lines = split /\n/, $gcode;
