@@ -90,7 +90,7 @@ while (1) {
         ($curx,$cury,$curz) = WorryEngrave::CNC->get_coords() unless $dryrun;
     }
     if ($ch eq 'a') {
-        $cutheight = sprintf("%.3f", input(10, $cutheight, "New cut height"));
+        $cutheight = input(10, $cutheight, "New cut height");
     }
     if ($ch eq 'p') { # probe
         probez();
