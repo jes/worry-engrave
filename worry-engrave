@@ -101,18 +101,24 @@ while (1) {
 sub input {
     my ($line, $cur, $prompt) = @_;
 
-    $scr->at($line, 0);
-    $scr->clreol;
-    $scr->at($line, 2);
-    $scr->puts("$prompt: ");
-
     my $new = '';
 
     while (1) {
+        $scr->at($line, 0);
+        $scr->clreol;
+        $scr->at($line, 2);
+        $scr->puts("$prompt: $new");
+
         my $ch = $scr->getch;
         last if $ch eq "\r"; # enter
         return $cur if ord($ch) == 7; # escape
-        $new .= $ch;
+        if (ord($ch) == 127) { # backspace
+            if (length($new) > 0) {
+                substr($new, length($new)-1, 1, '');
+            }
+        } else {
+            $new .= $ch;
+        }
     }
 
     return $new;
