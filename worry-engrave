@@ -35,6 +35,7 @@ my $safey = 200; # mm
 my $fastfeed = 1000; # mm/min
 my $fastprobe = 200; # mm/min
 my $slowprobe = 50; # mm/min
+my $cutspeed = 30; # mm/min
 my $probeheight = 24.83 - 11.8 - 1.0; # mm # probe is 24.83mm tall, jig platform is 11.8mm above table, disc is 1mm thick
 
 ($curx,$cury,$curz) = WorryEngrave::CNC->get_coords() unless $dryrun;
@@ -185,6 +186,7 @@ sub engrave {
         centrex => 0,
         centrey => 0,
         diameter => 17,
+        hspeed => $cutspeed,
     );
 
     my @lines = split /\n/, $gcode;
