@@ -89,6 +89,9 @@ while (1) {
     if ($ch eq 'g') { # get coords
         ($curx,$cury,$curz) = WorryEngrave::CNC->get_coords() unless $dryrun;
     }
+    if ($ch eq 'a') {
+        $cutheight = sprintf("%.3f", input(10, $cutheight, "New cut height"));
+    }
     if ($ch eq 'p') { # probe
         probez();
         ($curx,$cury,$curz) = WorryEngrave::CNC->get_coords() unless $dryrun;
@@ -146,6 +149,11 @@ sub draw {
     $scr->puts(" [E]ngrave [C]hange");
 
     $scr->at(10, 2);
+    $scr->puts("Cut height: ");
+    $scr->bold->puts($cutheight)->normal;
+    $scr->puts(" Ch[a]nge");
+
+    $scr->at(12, 2);
     $scr->puts("[Q]uit [H]elp [G]et coords");
 }
 
