@@ -48,6 +48,8 @@ sub get_coords {
 
     return (undef,undef,undef) if $dryrun;
 
+    while ($pkg->read_line) {} # discard existing input
+
     while (1) {
         print $CNC_FH "?\n";
 
@@ -58,7 +60,8 @@ sub get_coords {
                     @wco = ($1,$2,$3);
                 }
                 if (/MPos:\s*([-.0-9]+),([-.0-9]+),([-.0-9]+)/) {
-                    return ($1-$wco[0],$2-$wco[1],$3-$wco[2]) if /Idle/;
+                    my @mpos = ($1,$2,$3);
+                    return ($mpos[0]-$wco[0],$mpos[1]-$wco[1],$mpos[2]-$wco[2]) if /Idle/;
                     $ask_again = 1;
                 }
            }
