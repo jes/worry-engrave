@@ -36,6 +36,7 @@ my $fastfeed = 1000; # mm/min
 my $fastprobe = 200; # mm/min
 my $slowprobe = 50; # mm/min
 my $cutspeed = 30; # mm/min
+my $cutheight = -0.25; # mm
 my $probeheight = 24.83 - 11.8 - 1.0; # mm # probe is 24.83mm tall, jig platform is 11.8mm above table, disc is 1mm thick
 
 ($curx,$cury,$curz) = WorryEngrave::CNC->get_coords() unless $dryrun;
@@ -85,8 +86,12 @@ while (1) {
     if ($ch eq 'h') { # help
         help();
     }
+    if ($ch eq 'g') { # get coords
+        ($curx,$cury,$curz) = WorryEngrave::CNC->get_coords() unless $dryrun;
+    }
     if ($ch eq 'p') { # probe
         probez();
+        ($curx,$cury,$curz) = WorryEngrave::CNC->get_coords() unless $dryrun;
     }
 }
 
@@ -141,7 +146,7 @@ sub draw {
     $scr->puts(" [E]ngrave [C]hange");
 
     $scr->at(10, 2);
-    $scr->puts("[Q]uit [H]elp");
+    $scr->puts("[Q]uit [H]elp [G]et coords");
 }
 
 sub ready {
@@ -187,6 +192,7 @@ sub engrave {
         centrey => 0,
         diameter => 17,
         hspeed => $cutspeed,
+        cutheight => $cutheight,
     );
 
     my @lines = split /\n/, $gcode;
